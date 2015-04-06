@@ -1,6 +1,6 @@
 #aofgrep
 
-Like grep tool for aof files (redis incremental backup) written in Go
+Grep like tool for aof files (redis incremental backup) written in Go
 
 uses github.com/gato/aof for reading/writting aof
 
