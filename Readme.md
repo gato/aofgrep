@@ -2,9 +2,9 @@
 
 Grep like tool for aof files (redis incremental backup) written in Go
 
-uses github.com/gato/aof for reading/writting aof
+uses [aof](http://github.com/gato/aof) for reading & writting aof 
 
 ## Todo
-- [ ] test filters
+- [ ] tests 
 - [ ] remove code duplication & document exit codes 
 - [ ] support insensitive case search
