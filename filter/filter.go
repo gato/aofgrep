@@ -3,6 +3,7 @@ package filter
 import (
 	"github.com/gato/aof"
 	"regexp"
+	"strings"
 )
 
 type Filter struct {
@@ -17,7 +18,7 @@ func Match(op aof.Operation, filter Filter, inverse bool) bool {
 	if inverse {
 		rCode = true
 	}
-	if filter.Command != nil && filter.Command.FindStringIndex(op.Command) == nil {
+	if filter.Command != nil && filter.Command.FindStringIndex(strings.ToUpper(op.Command)) == nil {
 		return rCode
 	}
 	if filter.SubOp != nil && filter.SubOp.FindStringIndex(op.SubOp) == nil {

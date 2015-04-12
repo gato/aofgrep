@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strings"
 )
 
 func processInput(input *bufio.Reader, ftr filter.Filter, invert bool) (matched, processed int) {
@@ -53,7 +54,7 @@ func main() {
 
 	var err error
 	if *filterCommand != "" {
-		ftr.Command, err = regexp.Compile(*filterCommand)
+		ftr.Command, err = regexp.Compile(strings.ToUpper(*filterCommand))
 		if err != nil {
 			info := fmt.Sprintf("Can't compile command regexp:%s Error:%s\n", *filterCommand, err.Error())
 			os.Stderr.WriteString(info)

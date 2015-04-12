@@ -47,5 +47,22 @@ func TestCommandMatch(t *testing.T) {
 		t.Errorf("inverse of a non matching filter should return true")
 		return
 	}
+	// insensitive case test
+	op.Command = "select"
+	ftr.Command = regexp.MustCompile("SELECT")
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.Command '%s' should match '%s'", op.Command, ftr.Command)
+		return
+	}
+	op.Command = "Select"
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.Command '%s' should match '%s'", op.Command, ftr.Command)
+		return
+	}
+	op.Command = "SeLeCt"
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.Command '%s' should match '%s'", op.Command, ftr.Command)
+		return
+	}
 
 }
