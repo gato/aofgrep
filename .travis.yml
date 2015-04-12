@@ -7,8 +7,8 @@ before_install:
   - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
   - go get github.com/gato/aofgrep
 script:
-	- cd $GOPATH/src/github.com/gato/aofgrep/
-    - $HOME/gopath/bin/goveralls -v ./... -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - cd $GOPATH/src/github.com/gato/aofgrep/
+  - $HOME/gopath/bin/goveralls -v ./... -service=travis-ci -repotoken $COVERALLS_TOKEN
 notifications:
   email:
     on_success: never
