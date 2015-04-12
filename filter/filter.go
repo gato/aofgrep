@@ -13,27 +13,25 @@ type Filter struct {
 }
 
 func Match(op aof.Operation, filter Filter, inverse bool) bool {
-	if filter.Command != nil && filter.Command.FindStringIndex(op.Command) == nil && !inverse {
-		return false
+	rCode := false
+	if inverse {
+		rCode = true
 	}
-	if filter.SubOp != nil && filter.SubOp.FindStringIndex(op.SubOp) == nil && !inverse {
-		return false
+	if filter.Command != nil && filter.Command.FindStringIndex(op.Command) == nil {
+		return rCode
 	}
-	if filter.Key != nil && filter.Key.FindStringIndex(op.Key) == nil && !inverse {
-		return false
+	if filter.SubOp != nil && filter.SubOp.FindStringIndex(op.SubOp) == nil {
+		return rCode
+	}
+	if filter.Key != nil && filter.Key.FindStringIndex(op.Key) == nil {
+		return rCode
 	}
 	if filter.Parameter != nil {
 		for _, p := range op.Arguments {
 			if filter.Parameter.FindStringIndex(p) != nil {
-				if !inverse {
-					return true
-				}
+				break
 			}
 		}
-		return false
 	}
-	if inverse {
-		return false
-	}
-	return true
+	return !rCode
 }
