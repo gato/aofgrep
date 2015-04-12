@@ -10,7 +10,7 @@ import (
 	"regexp"
 )
 
-func processFile(input *bufio.Reader, filter Filter, invert bool) (matched, processed int) {
+func processInput(input *bufio.Reader, filter Filter, invert bool) (matched, processed int) {
 	processed = 0
 	matched = 0
 	for {
@@ -128,13 +128,13 @@ func main() {
 				os.Exit(1)
 			}
 			defer f.Close()
-			m, p := processFile(bufio.NewReader(f), filter, *invert)
+			m, p := processInput(bufio.NewReader(f), filter, *invert)
 			matched += m
 			processed += p
 		}
 	} else {
 		// process stdin
-		matched, processed = processFile(bufio.NewReader(os.Stdin), filter, *invert)
+		matched, processed = processInput(bufio.NewReader(os.Stdin), filter, *invert)
 	}
 	if *debug {
 		info := fmt.Sprintf("%d matches found %d commands processed\n", matched, processed)
