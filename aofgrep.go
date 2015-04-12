@@ -5,12 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gato/aof"
+	"github.com/gato/aofgrep/filter"
 	"io"
 	"os"
 	"regexp"
 )
 
-func processInput(input *bufio.Reader, filter Filter, invert bool) (matched, processed int) {
+func processInput(input *bufio.Reader, ftr filter.Filter, invert bool) (matched, processed int) {
 	processed = 0
 	matched = 0
 	for {
@@ -24,7 +25,7 @@ func processInput(input *bufio.Reader, filter Filter, invert bool) (matched, pro
 			os.Stderr.WriteString(info)
 			os.Exit(2)
 		}
-		if match(op, filter, invert) {
+		if filter.Match(op, ftr, invert) {
 			err = op.ToAof(os.Stdout)
 			matched++
 			if err != nil {
@@ -36,40 +37,10 @@ func processInput(input *bufio.Reader, filter Filter, invert bool) (matched, pro
 	}
 }
 
-type Filter struct {
-	Command   *regexp.Regexp
-	SubOp     *regexp.Regexp
-	Key       *regexp.Regexp
-	Parameter *regexp.Regexp
-}
-
-func match(op aof.Operation, filter Filter, inverse bool) bool {
-	if filter.Command != nil && filter.Command.FindStringIndex(op.Command) == nil && !inverse {
-		return false
-	}
-	if filter.SubOp != nil && filter.SubOp.FindStringIndex(op.SubOp) == nil && !inverse {
-		return false
-	}
-	if filter.Key != nil && filter.Key.FindStringIndex(op.Key) == nil && !inverse {
-		return false
-	}
-	if filter.Parameter != nil {
-		for _, p := range op.Arguments {
-			if filter.Parameter.FindStringIndex(p) != nil {
-				if !inverse {
-					return true
-				}
-			}
-		}
-		return false
-	}
-	return true
-}
-
 func main() {
 
 	var matched, processed int
-	var filter Filter = Filter{}
+	var ftr filter.Filter = filter.Filter{}
 
 	filterCommand := flag.String("command", "", "a regexp for filtering by command")
 	filterSubop := flag.String("subop", "", "a regexp for filtering by sub operation keys")
@@ -82,7 +53,7 @@ func main() {
 
 	var err error
 	if *filterCommand != "" {
-		filter.Command, err = regexp.Compile(*filterCommand)
+		ftr.Command, err = regexp.Compile(*filterCommand)
 		if err != nil {
 			info := fmt.Sprintf("Can't compile command regexp:%s Error:%s\n", *filterCommand, err.Error())
 			os.Stderr.WriteString(info)
@@ -91,7 +62,7 @@ func main() {
 	}
 
 	if *filterSubop != "" {
-		filter.SubOp, err = regexp.Compile(*filterSubop)
+		ftr.SubOp, err = regexp.Compile(*filterSubop)
 		if err != nil {
 			info := fmt.Sprintf("Can't compile subop regexp:%s Error:%s\n", *filterSubop, err.Error())
 			os.Stderr.WriteString(info)
@@ -99,7 +70,7 @@ func main() {
 		}
 	}
 	if *filterKey != "" {
-		filter.Key, err = regexp.Compile(*filterKey)
+		ftr.Key, err = regexp.Compile(*filterKey)
 		if err != nil {
 			info := fmt.Sprintf("Can't compile key regexp:%s Error:%s\n", *filterKey, err.Error())
 			os.Stderr.WriteString(info)
@@ -107,7 +78,7 @@ func main() {
 		}
 	}
 	if *filterParameter != "" {
-		filter.Parameter, err = regexp.Compile(*filterParameter)
+		ftr.Parameter, err = regexp.Compile(*filterParameter)
 		if err != nil {
 			info := fmt.Sprintf("Can't compile parameter regexp:%s Error:%s\n", *filterParameter, err.Error())
 			os.Stderr.WriteString(info)
@@ -128,13 +99,13 @@ func main() {
 				os.Exit(1)
 			}
 			defer f.Close()
-			m, p := processInput(bufio.NewReader(f), filter, *invert)
+			m, p := processInput(bufio.NewReader(f), ftr, *invert)
 			matched += m
 			processed += p
 		}
 	} else {
 		// process stdin
-		matched, processed = processInput(bufio.NewReader(os.Stdin), filter, *invert)
+		matched, processed = processInput(bufio.NewReader(os.Stdin), ftr, *invert)
 	}
 	if *debug {
 		info := fmt.Sprintf("%d matches found %d commands processed\n", matched, processed)

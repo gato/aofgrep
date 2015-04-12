@@ -1,2 +1,5 @@
 src/github.com
 pkg
+src/code.google.com
+src/golang.org
+bin
