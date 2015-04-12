@@ -1,4 +1,7 @@
 #aofgrep
+[![Build Status](https://travis-ci.org/gato/aofgrep.svg?branch=master)](https://travis-ci.org/gato/aofgrep)
+[![Coverage Status](https://coveralls.io/repos/gato/aofgrep/badge.svg?branch=master)](https://coveralls.io/r/gato/aofgrep?branch=master)
+[![GoDoc](https://godoc.org/github.com/gato/aofgrep?status.svg)](http://godoc.org/github.com/gato/aofgrep)
 
 Grep like tool for aof files (redis incremental backup) written in Go
 
