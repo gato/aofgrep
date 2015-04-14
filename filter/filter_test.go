@@ -83,3 +83,59 @@ func TestNoFilterMatch(t *testing.T) {
 		return
 	}
 }
+
+func TestKeyMatch(t *testing.T) {
+	var op aof.Operation
+	var ftr Filter
+
+	op.Key = "K1"
+
+	// simple match (exact)
+	ftr.Key = regexp.MustCompile("K1")
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.Key '%s' should match '%s'", op.Key, ftr.Key)
+		return
+	}
+	// inverse match
+	if Match(op, ftr, true) {
+		t.Errorf("inverse of a matching filter should return false")
+		return
+	}
+
+	// Regexp matches
+	ftr.Key = regexp.MustCompile("K.*")
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.Key '%s' should match '%s'", op.Key, ftr.Key)
+		return
+	}
+	ftr.Key = regexp.MustCompile(".1")
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.Key '%s' should match '%s'", op.Key, ftr.Key)
+		return
+	}
+
+	// no match
+	ftr.Key = regexp.MustCompile("K2")
+	if Match(op, ftr, false) {
+		t.Errorf("Op.Key '%s' shouldn't match '%s'", op.Key, ftr.Key)
+		return
+	}
+	// inverse match
+	if !Match(op, ftr, true) {
+		t.Errorf("inverse of a non matching filter should return true")
+		return
+	}
+	// insensitive case test
+	ftr.Key = regexp.MustCompile("k1")
+	if Match(op, ftr, false) {
+		t.Errorf("Op.Key '%s' shouldn't match '%s'", op.Key, ftr.Key)
+		return
+	}
+
+	op.Key = "k1"
+	ftr.Key = regexp.MustCompile("K1")
+	if Match(op, ftr, false) {
+		t.Errorf("Op.Key '%s' shouldn't match '%s'", op.Key, ftr.Key)
+		return
+	}
+}
