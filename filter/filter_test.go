@@ -139,3 +139,63 @@ func TestKeyMatch(t *testing.T) {
 		return
 	}
 }
+
+func TestSubOpMatch(t *testing.T) {
+	var op aof.Operation
+	var ftr Filter
+
+	op.SubOp = "AND"
+
+	// simple match (exact)
+	ftr.SubOp = regexp.MustCompile("AND")
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.SubOp '%s' should match '%s'", op.SubOp, ftr.SubOp)
+		return
+	}
+	// inverse match
+	if Match(op, ftr, true) {
+		t.Errorf("inverse of a matching filter should return false")
+		return
+	}
+
+	// Regexp matches
+	ftr.SubOp = regexp.MustCompile("AN.*")
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.SubOp '%s' should match '%s'", op.SubOp, ftr.SubOp)
+		return
+	}
+	ftr.SubOp = regexp.MustCompile(".ND")
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.SubOp '%s' should match '%s'", op.SubOp, ftr.SubOp)
+		return
+	}
+
+	// no match
+	ftr.SubOp = regexp.MustCompile("NOT")
+	if Match(op, ftr, false) {
+		t.Errorf("Op.SubOp '%s' shouldn't match '%s'", op.SubOp, ftr.SubOp)
+		return
+	}
+	// inverse match
+	if !Match(op, ftr, true) {
+		t.Errorf("inverse of a non matching filter should return true")
+		return
+	}
+	// insensitive case test
+	op.SubOp = "and"
+	ftr.SubOp = regexp.MustCompile("AND")
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.SubOp '%s' should match '%s'", op.SubOp, ftr.SubOp)
+		return
+	}
+	op.SubOp = "And"
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.SubOp '%s' should match '%s'", op.SubOp, ftr.SubOp)
+		return
+	}
+	op.Command = "AnD"
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.SubOp '%s' should match '%s'", op.SubOp, ftr.SubOp)
+		return
+	}
+}

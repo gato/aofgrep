@@ -21,7 +21,7 @@ func Match(op aof.Operation, filter Filter, inverse bool) bool {
 	if filter.Command != nil && filter.Command.FindStringIndex(strings.ToUpper(op.Command)) == nil {
 		return rCode
 	}
-	if filter.SubOp != nil && filter.SubOp.FindStringIndex(op.SubOp) == nil {
+	if filter.SubOp != nil && filter.SubOp.FindStringIndex(strings.ToUpper(op.SubOp)) == nil {
 		return rCode
 	}
 	if filter.Key != nil && filter.Key.FindStringIndex(op.Key) == nil {
