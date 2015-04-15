@@ -199,3 +199,63 @@ func TestSubOpMatch(t *testing.T) {
 		return
 	}
 }
+
+func TestParameterMatch(t *testing.T) {
+	var op aof.Operation
+	var ftr Filter
+
+	op.Arguments = []string{"p1", "p2"}
+
+	// simple match (exact)
+	ftr.Parameter = regexp.MustCompile("p1")
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.Arguments '%+v' should match '%s'", op.Arguments, ftr.Parameter)
+		return
+	}
+	// inverse match
+	if Match(op, ftr, true) {
+		t.Errorf("inverse of a matching filter should return false")
+		return
+	}
+	// simple match (exact)
+	ftr.Parameter = regexp.MustCompile("p2")
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.Arguments '%+v' should match '%s'", op.Arguments, ftr.Parameter)
+		return
+	}
+
+	// Regexp matches
+	ftr.Parameter = regexp.MustCompile("p.*")
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.Arguments '%+v' should match '%s'", op.Arguments, ftr.Parameter)
+		return
+	}
+	ftr.Parameter = regexp.MustCompile(".2")
+	if !Match(op, ftr, false) {
+		t.Errorf("Op.Arguments '%+v' should match '%s'", op.Arguments, ftr.Parameter)
+		return
+	}
+
+	// no match
+	ftr.Parameter = regexp.MustCompile("p3")
+	if Match(op, ftr, false) {
+		t.Errorf("Op.Arguments '%+v' shouldn't match '%s'", op.Arguments, ftr.Parameter)
+		return
+	}
+	// inverse match
+	if !Match(op, ftr, true) {
+		t.Errorf("inverse of a non matching filter should return true")
+		return
+	}
+	// insensitive case test
+	ftr.Parameter = regexp.MustCompile("P1")
+	if Match(op, ftr, false) {
+		t.Errorf("Op.Arguments '%+v' shouldn't match '%s'", op.Arguments, ftr.Parameter)
+		return
+	}
+	ftr.Parameter = regexp.MustCompile("P2")
+	if Match(op, ftr, false) {
+		t.Errorf("Op.Arguments '%+v' shouldn't match '%s'", op.Arguments, ftr.Parameter)
+		return
+	}
+}

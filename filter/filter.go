@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"fmt"
 	"github.com/gato/aof"
 	"regexp"
 	"strings"
@@ -27,12 +28,15 @@ func Match(op aof.Operation, filter Filter, inverse bool) bool {
 	if filter.Key != nil && filter.Key.FindStringIndex(op.Key) == nil {
 		return rCode
 	}
-	if filter.Parameter != nil {
-		for _, p := range op.Arguments {
-			if filter.Parameter.FindStringIndex(p) != nil {
-				break
-			}
+	if filter.Parameter == nil {
+		return !rCode
+	}
+	for _, p := range op.Arguments {
+		fmt.Printf("p => '%s'\n", p)
+		fmt.Printf("Parameter => '%s'\n", filter.Parameter.String())
+		if filter.Parameter.FindStringIndex(p) != nil {
+			return !rCode
 		}
 	}
-	return !rCode
+	return rCode
 }
