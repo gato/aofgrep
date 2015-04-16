@@ -280,4 +280,18 @@ func TestMoreThanOneFilter(t *testing.T) {
 		t.Errorf("inverse of a matching filter should return false")
 		return
 	}
+	// 1 no match = no match
+	ftr.Parameter = regexp.MustCompile("p1")
+	ftr.Key = regexp.MustCompile("k2")
+	ftr.Command = regexp.MustCompile("SADD")
+	if Match(op, ftr, false) {
+		t.Errorf("Op '%+v' shouldn't match '%+v'", op, ftr)
+		return
+	}
+	// inverse match
+	if !Match(op, ftr, true) {
+		t.Errorf("inverse of a non matching filter should return true")
+		return
+	}
+
 }
