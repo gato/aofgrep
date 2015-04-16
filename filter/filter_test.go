@@ -259,3 +259,25 @@ func TestParameterMatch(t *testing.T) {
 		return
 	}
 }
+
+func TestMoreThanOneFilter(t *testing.T) {
+	var op aof.Operation
+	var ftr Filter
+	op.Command = "SADD"
+	op.Key = "k1"
+	op.Arguments = []string{"p1", "p2"}
+
+	// simple match (exact)
+	ftr.Parameter = regexp.MustCompile("p1")
+	ftr.Key = regexp.MustCompile("k1")
+	ftr.Command = regexp.MustCompile("SADD")
+	if !Match(op, ftr, false) {
+		t.Errorf("Op '%+v' should match '%+v'", op, ftr)
+		return
+	}
+	// inverse match
+	if Match(op, ftr, true) {
+		t.Errorf("inverse of a matching filter should return false")
+		return
+	}
+}
