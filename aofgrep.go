@@ -41,7 +41,7 @@ func processInput(input *bufio.Reader, ftr filter.Filter, invert bool) (matched,
 func main() {
 
 	var matched, processed int
-	var ftr filter.Filter = filter.Filter{}
+	var ftr filter.Filter
 
 	filterCommand := flag.String("command", "", "a regexp for filtering by command")
 	filterSubop := flag.String("subop", "", "a regexp for filtering by sub operation keys")

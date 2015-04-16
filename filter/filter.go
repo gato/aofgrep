@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// Filter contains compiled regexps to match against aof.Operation
 type Filter struct {
 	Command   *regexp.Regexp
 	SubOp     *regexp.Regexp
@@ -13,6 +14,9 @@ type Filter struct {
 	Parameter *regexp.Regexp
 }
 
+// Match return true if all regexps in Filter match the Operation
+// else false
+// inverse => returns the oposite
 func Match(op aof.Operation, filter Filter, inverse bool) bool {
 	rCode := false
 	if inverse {
