@@ -12,36 +12,62 @@ import (
 	"strings"
 )
 
-func processInput(input *bufio.Reader, ftr filter.Filter, invert bool) (matched, processed int) {
+func processInput(input *bufio.Reader, ftr filter.Filter, invert bool) (matched, processed int, err error) {
 	processed = 0
 	matched = 0
 	for {
 		processed++
-		op, err := aof.ReadOperation(input)
-		if err != nil {
-			if err == io.EOF {
+		op, e := aof.ReadOperation(input)
+		if e != nil {
+			if e == io.EOF {
 				return
 			}
-			info := fmt.Sprintf("Error processing command %d Error:%s\n", processed, err.Error())
-			os.Stderr.WriteString(info)
-			os.Exit(2)
+			err = fmt.Errorf("Error processing command %d Error:%s\n", processed, e.Error())
+			return
 		}
 		if filter.Match(op, ftr, invert) {
-			err = op.ToAof(os.Stdout)
+			e = op.ToAof(os.Stdout)
 			matched++
-			if err != nil {
-				info := fmt.Sprintf("Error writing command %d Error:%s\n", processed, err.Error())
-				os.Stderr.WriteString(info)
-				os.Exit(3)
+			if e != nil {
+				err = fmt.Errorf("Error writing command %d Error:%s\n", processed, e.Error())
+				return
 			}
 		}
 	}
 }
 
-func main() {
+func processFiles(opt Options) (matched, processed int, err error) {
+	processed = 0
+	matched = 0
+	for _, file := range opt.Files {
+		if opt.Debug {
+			os.Stderr.WriteString(fmt.Sprintf("Parsing file %s\n", file))
+		}
+		f, e := os.Open(file)
+		if e != nil {
+			err = fmt.Errorf("Can't open file:%s Error:%s\n", file, e.Error())
+			return
+		}
+		defer f.Close()
+		var m, p int
+		m, p, err = processInput(bufio.NewReader(f), opt.Filter, opt.Invert)
+		if err != nil {
+			return
+		}
+		matched += m
+		processed += p
+	}
+	return
+}
 
-	var matched, processed int
-	var ftr filter.Filter
+type Options struct {
+	Filter filter.Filter
+	Debug  bool
+	Invert bool
+	Files  []string
+}
+
+func parseCmdLine() (opt Options, err error) {
 
 	filterCommand := flag.String("command", "", "a regexp for filtering by command")
 	filterSubop := flag.String("subop", "", "a regexp for filtering by sub operation keys")
@@ -51,65 +77,64 @@ func main() {
 	invert := flag.Bool("v", false, "output command if does not match")
 
 	flag.Parse()
-
-	var err error
+	var e error
 	if *filterCommand != "" {
-		ftr.Command, err = regexp.Compile(strings.ToUpper(*filterCommand))
-		if err != nil {
-			info := fmt.Sprintf("Can't compile command regexp:%s Error:%s\n", *filterCommand, err.Error())
-			os.Stderr.WriteString(info)
-			os.Exit(1)
+		opt.Filter.Command, e = regexp.Compile(strings.ToUpper(*filterCommand))
+		if e != nil {
+			err = fmt.Errorf("Can't compile command regexp:%s Error:%s\n", *filterCommand, e.Error())
+			return
 		}
 	}
 
 	if *filterSubop != "" {
-		ftr.SubOp, err = regexp.Compile(*filterSubop)
-		if err != nil {
-			info := fmt.Sprintf("Can't compile subop regexp:%s Error:%s\n", *filterSubop, err.Error())
-			os.Stderr.WriteString(info)
-			os.Exit(1)
+		opt.Filter.SubOp, e = regexp.Compile(*filterSubop)
+		if e != nil {
+			err = fmt.Errorf("Can't compile subop regexp:%s Error:%s\n", *filterSubop, e.Error())
+			return
 		}
 	}
 	if *filterKey != "" {
-		ftr.Key, err = regexp.Compile(*filterKey)
-		if err != nil {
-			info := fmt.Sprintf("Can't compile key regexp:%s Error:%s\n", *filterKey, err.Error())
-			os.Stderr.WriteString(info)
-			os.Exit(1)
+		opt.Filter.Key, e = regexp.Compile(*filterKey)
+		if e != nil {
+			err = fmt.Errorf("Can't compile key regexp:%s Error:%s\n", *filterKey, e.Error())
+			return
 		}
 	}
 	if *filterParameter != "" {
-		ftr.Parameter, err = regexp.Compile(*filterParameter)
-		if err != nil {
-			info := fmt.Sprintf("Can't compile parameter regexp:%s Error:%s\n", *filterParameter, err.Error())
-			os.Stderr.WriteString(info)
-			os.Exit(1)
+		opt.Filter.Parameter, e = regexp.Compile(*filterParameter)
+		if e != nil {
+			err = fmt.Errorf("Can't compile parameter regexp:%s Error:%s\n", *filterParameter, e.Error())
+			return
 		}
+	}
+	opt.Files = flag.Args()
+	opt.Debug = *debug
+	opt.Invert = *invert
+	return
+}
+
+func main() {
+
+	var matched, processed int
+
+	options, err := parseCmdLine()
+	if err != nil {
+		os.Stderr.WriteString(err.Error())
+		os.Exit(1)
 	}
 
-	if len(flag.Args()) > 0 {
-		for _, file := range flag.Args() {
-			if *debug {
-				info := fmt.Sprintf("Parsing file %s\n", file)
-				os.Stderr.WriteString(info)
-			}
-			f, err := os.Open(file)
-			if err != nil {
-				info := fmt.Sprintf("Can't open file:%s Error:%s\n", file, err.Error())
-				os.Stderr.WriteString(info)
-				os.Exit(1)
-			}
-			defer f.Close()
-			m, p := processInput(bufio.NewReader(f), ftr, *invert)
-			matched += m
-			processed += p
-		}
+	if len(options.Files) > 0 {
+		matched, processed, err = processFiles(options)
 	} else {
 		// process stdin
-		matched, processed = processInput(bufio.NewReader(os.Stdin), ftr, *invert)
+		matched, processed, err = processInput(bufio.NewReader(os.Stdin), options.Filter, options.Invert)
 	}
-	if *debug {
-		info := fmt.Sprintf("%d matches found %d commands processed\n", matched, processed)
-		os.Stderr.WriteString(info)
+	if err != nil {
+		os.Stderr.WriteString(err.Error())
+		os.Exit(2)
 	}
+	if options.Debug {
+		os.Stderr.WriteString(fmt.Sprintf("%d matches found %d commands processed\n", matched, processed))
+	}
+
 }
