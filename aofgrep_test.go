@@ -42,7 +42,7 @@ func TestProcessInput(t *testing.T) {
 	rec := RecordWriter{}
 	matched, processed, err := processInput(input, &rec, ftr, false)
 	if err != nil {
-		t.Errorf("processInput:'%s'", err.Error())
+		t.Errorf("processInput returned error:'%s'", err.Error())
 		return
 	}
 	if matched != 1 {
@@ -118,4 +118,30 @@ func TestProcessInputErrorOnWrite(t *testing.T) {
 		return
 	}
 
+}
+
+func TestProcessFiles(t *testing.T) {
+	var opt Options
+	opt.Debug = false
+	opt.Filter.Command = regexp.MustCompile("SET")
+	opt.Files = []string{"test-data-bitop.aof", "test-data.aof"}
+	rec := RecordWriter{}
+	expected := "*3\r\n$3\r\nset\r\n$2\r\nk4\r\n$4\r\nyolo\r\n*3\r\n$3\r\nSET\r\n$6\r\nlast:1\r\n$32\r\nea4b640e462d11e2a119005056a3cdd9\r\n"
+	matched, processed, err := processFiles(&rec, opt)
+	if err != nil {
+		t.Errorf("processFiles returned error:'%s'", err.Error())
+		return
+	}
+	if matched != 2 {
+		t.Errorf("Invalid match count:'%d' expected:'1'", matched)
+		return
+	}
+	if processed != 6 {
+		t.Errorf("Invalid processed count:'%d' expected:'6'", processed)
+		return
+	}
+	if string(rec) != expected {
+		t.Errorf("Invalid output:'%s' expected:'%s'", string(rec), expected)
+		return
+	}
 }
