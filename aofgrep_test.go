@@ -117,7 +117,6 @@ func TestProcessInputErrorOnWrite(t *testing.T) {
 		t.Errorf("Invalid error:'%s' expected:'%s'", err.Error(), expected)
 		return
 	}
-
 }
 
 func TestProcessFiles(t *testing.T) {
@@ -142,6 +141,31 @@ func TestProcessFiles(t *testing.T) {
 	}
 	if string(rec) != expected {
 		t.Errorf("Invalid output:'%s' expected:'%s'", string(rec), expected)
+		return
+	}
+}
+
+func TestProcessFilesNotFound(t *testing.T) {
+	var opt Options
+	opt.Debug = false
+	opt.Filter.Command = regexp.MustCompile("SET")
+	opt.Files = []string{"test-data-bitop.aof", "not-existing.aof"}
+	rec := RecordWriter{}
+	_, _, err := processFiles(&rec, opt)
+	if err == nil {
+		t.Errorf("processFiles should return and error")
+		return
+	}
+}
+func TestProcessFilesErrorOnWrite(t *testing.T) {
+	var opt Options
+	opt.Debug = false
+	opt.Filter.Command = regexp.MustCompile("SET")
+	opt.Files = []string{"test-data-bitop.aof", "test-data.aof"}
+	rec := newErrorNWriter(1)
+	_, _, err := processFiles(&rec, opt)
+	if err == nil {
+		t.Errorf("processFiles should return and error")
 		return
 	}
 }
