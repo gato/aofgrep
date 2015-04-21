@@ -12,11 +12,10 @@ import (
 	"strings"
 )
 
-func processInput(input *bufio.Reader, ftr filter.Filter, invert bool) (matched, processed int, err error) {
+func processInput(input *bufio.Reader, out io.Writer, ftr filter.Filter, invert bool) (matched, processed int, err error) {
 	processed = 0
 	matched = 0
 	for {
-		processed++
 		op, e := aof.ReadOperation(input)
 		if e != nil {
 			if e == io.EOF {
@@ -25,8 +24,9 @@ func processInput(input *bufio.Reader, ftr filter.Filter, invert bool) (matched,
 			err = fmt.Errorf("Error processing command %d Error:%s\n", processed, e.Error())
 			return
 		}
+		processed++
 		if filter.Match(op, ftr, invert) {
-			e = op.ToAof(os.Stdout)
+			e = op.ToAof(out)
 			matched++
 			if e != nil {
 				err = fmt.Errorf("Error writing command %d Error:%s\n", processed, e.Error())
@@ -36,7 +36,7 @@ func processInput(input *bufio.Reader, ftr filter.Filter, invert bool) (matched,
 	}
 }
 
-func processFiles(opt Options) (matched, processed int, err error) {
+func processFiles(out io.Writer, opt Options) (matched, processed int, err error) {
 	processed = 0
 	matched = 0
 	for _, file := range opt.Files {
@@ -50,7 +50,7 @@ func processFiles(opt Options) (matched, processed int, err error) {
 		}
 		defer f.Close()
 		var m, p int
-		m, p, err = processInput(bufio.NewReader(f), opt.Filter, opt.Invert)
+		m, p, err = processInput(bufio.NewReader(f), out, opt.Filter, opt.Invert)
 		if err != nil {
 			return
 		}
@@ -124,10 +124,10 @@ func main() {
 	}
 
 	if len(options.Files) > 0 {
-		matched, processed, err = processFiles(options)
+		matched, processed, err = processFiles(os.Stdout, options)
 	} else {
 		// process stdin
-		matched, processed, err = processInput(bufio.NewReader(os.Stdin), options.Filter, options.Invert)
+		matched, processed, err = processInput(bufio.NewReader(os.Stdin), os.Stdout, options.Filter, options.Invert)
 	}
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
