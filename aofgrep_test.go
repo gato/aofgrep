@@ -12,8 +12,8 @@ import (
 // should move this to a testing library. (its also in aof_test.go)
 type RecordWriter []byte
 
-func (this *RecordWriter) Write(b []byte) (int, error) {
-	*this = append(*this, b...)
+func (r *RecordWriter) Write(b []byte) (int, error) {
+	*r = append(*r, b...)
 	return len(b), nil
 }
 
@@ -22,9 +22,9 @@ type ErrorNWriter struct {
 	failing int
 }
 
-func (this *ErrorNWriter) Write(b []byte) (int, error) {
-	this.current += 1
-	if this.current == this.failing {
+func (r *ErrorNWriter) Write(b []byte) (int, error) {
+	r.current++
+	if r.current == r.failing {
 		return len(b), fmt.Errorf("Some error")
 	}
 	return len(b), nil
@@ -37,7 +37,7 @@ func newErrorNWriter(failing int) ErrorNWriter {
 func TestProcessInput(t *testing.T) {
 	var ftr filter.Filter
 	var expected = "*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"
-	var input aof.Reader = aof.NewBufioReader(strings.NewReader(expected))
+	var input = aof.NewBufioReader(strings.NewReader(expected))
 	ftr.Command = regexp.MustCompile("SELECT")
 	rec := RecordWriter{}
 	matched, processed, err := processInput(input, &rec, ftr, false)
@@ -62,7 +62,7 @@ func TestProcessInput(t *testing.T) {
 func TestProcessInputNoMatch(t *testing.T) {
 	var ftr filter.Filter
 	var expected = ""
-	var input aof.Reader = aof.NewBufioReader(strings.NewReader("*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"))
+	var input = aof.NewBufioReader(strings.NewReader("*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"))
 	ftr.Command = regexp.MustCompile("SADD")
 	rec := RecordWriter{}
 	matched, processed, err := processInput(input, &rec, ftr, false)
@@ -86,7 +86,7 @@ func TestProcessInputNoMatch(t *testing.T) {
 
 func TestProcessInputEofError(t *testing.T) {
 	var ftr filter.Filter
-	var input aof.Reader = aof.NewBufioReader(strings.NewReader("*2\r\n$6\r\nSELECT\r\n$1\r\n"))
+	var input = aof.NewBufioReader(strings.NewReader("*2\r\n$6\r\nSELECT\r\n$1\r\n"))
 	var expected = "Error processing command 0 Error:"
 	ftr.Command = regexp.MustCompile("SELECT")
 	rec := RecordWriter{}
@@ -104,7 +104,7 @@ func TestProcessInputEofError(t *testing.T) {
 
 func TestProcessInputErrorOnWrite(t *testing.T) {
 	var ftr filter.Filter
-	var input aof.Reader = aof.NewBufioReader(strings.NewReader("*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"))
+	var input = aof.NewBufioReader(strings.NewReader("*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"))
 	var expected = "Error writing command 1 Error:Some error\n"
 	ftr.Command = regexp.MustCompile("SELECT")
 	rec := newErrorNWriter(1)
@@ -120,7 +120,7 @@ func TestProcessInputErrorOnWrite(t *testing.T) {
 }
 
 func TestProcessFiles(t *testing.T) {
-	var opt Options
+	var opt options
 	opt.Debug = false
 	opt.Filter.Command = regexp.MustCompile("SET")
 	opt.Files = []string{"test-data-bitop.aof", "test-data.aof"}
@@ -146,7 +146,7 @@ func TestProcessFiles(t *testing.T) {
 }
 
 func TestProcessFilesNotFound(t *testing.T) {
-	var opt Options
+	var opt options
 	opt.Debug = false
 	opt.Filter.Command = regexp.MustCompile("SET")
 	opt.Files = []string{"test-data-bitop.aof", "not-existing.aof"}
@@ -158,7 +158,7 @@ func TestProcessFilesNotFound(t *testing.T) {
 	}
 }
 func TestProcessFilesErrorOnWrite(t *testing.T) {
-	var opt Options
+	var opt options
 	opt.Debug = false
 	opt.Filter.Command = regexp.MustCompile("SET")
 	opt.Files = []string{"test-data-bitop.aof", "test-data.aof"}

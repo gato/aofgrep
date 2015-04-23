@@ -35,7 +35,7 @@ func processInput(reader aof.Reader, out io.Writer, ftr filter.Filter, invert bo
 	}
 }
 
-func processFiles(out io.Writer, opt Options) (matched, processed int, err error) {
+func processFiles(out io.Writer, opt options) (matched, processed int, err error) {
 	processed = 0
 	matched = 0
 	for _, file := range opt.Files {
@@ -59,14 +59,14 @@ func processFiles(out io.Writer, opt Options) (matched, processed int, err error
 	return
 }
 
-type Options struct {
+type options struct {
 	Filter filter.Filter
 	Debug  bool
 	Invert bool
 	Files  []string
 }
 
-func parseCmdLine() (opt Options, err error) {
+func parseCmdLine() (opt options, err error) {
 
 	filterCommand := flag.String("command", "", "a regexp for filtering by command")
 	filterSubop := flag.String("subop", "", "a regexp for filtering by sub operation keys")
@@ -116,23 +116,23 @@ func main() {
 
 	var matched, processed int
 
-	options, err := parseCmdLine()
+	opt, err := parseCmdLine()
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
 		os.Exit(1)
 	}
 
-	if len(options.Files) > 0 {
-		matched, processed, err = processFiles(os.Stdout, options)
+	if len(opt.Files) > 0 {
+		matched, processed, err = processFiles(os.Stdout, opt)
 	} else {
 		// process stdin
-		matched, processed, err = processInput(aof.NewBufioReader(os.Stdin), os.Stdout, options.Filter, options.Invert)
+		matched, processed, err = processInput(aof.NewBufioReader(os.Stdin), os.Stdout, opt.Filter, opt.Invert)
 	}
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
 		os.Exit(2)
 	}
-	if options.Debug {
+	if opt.Debug {
 		os.Stderr.WriteString(fmt.Sprintf("%d matches found %d commands processed\n", matched, processed))
 	}
 
