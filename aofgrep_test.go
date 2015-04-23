@@ -37,7 +37,7 @@ func newErrorNWriter(failing int) ErrorNWriter {
 func TestProcessInput(t *testing.T) {
 	var ftr filter.Filter
 	var expected = "*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"
-	var input aof.AofReader = aof.NewBufioReader(strings.NewReader(expected))
+	var input aof.Reader = aof.NewBufioReader(strings.NewReader(expected))
 	ftr.Command = regexp.MustCompile("SELECT")
 	rec := RecordWriter{}
 	matched, processed, err := processInput(input, &rec, ftr, false)
@@ -62,7 +62,7 @@ func TestProcessInput(t *testing.T) {
 func TestProcessInputNoMatch(t *testing.T) {
 	var ftr filter.Filter
 	var expected = ""
-	var input aof.AofReader = aof.NewBufioReader(strings.NewReader("*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"))
+	var input aof.Reader = aof.NewBufioReader(strings.NewReader("*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"))
 	ftr.Command = regexp.MustCompile("SADD")
 	rec := RecordWriter{}
 	matched, processed, err := processInput(input, &rec, ftr, false)
@@ -86,7 +86,7 @@ func TestProcessInputNoMatch(t *testing.T) {
 
 func TestProcessInputEofError(t *testing.T) {
 	var ftr filter.Filter
-	var input aof.AofReader = aof.NewBufioReader(strings.NewReader("*2\r\n$6\r\nSELECT\r\n$1\r\n"))
+	var input aof.Reader = aof.NewBufioReader(strings.NewReader("*2\r\n$6\r\nSELECT\r\n$1\r\n"))
 	var expected = "Error processing command 0 Error:"
 	ftr.Command = regexp.MustCompile("SELECT")
 	rec := RecordWriter{}
@@ -104,7 +104,7 @@ func TestProcessInputEofError(t *testing.T) {
 
 func TestProcessInputErrorOnWrite(t *testing.T) {
 	var ftr filter.Filter
-	var input aof.AofReader = aof.NewBufioReader(strings.NewReader("*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"))
+	var input aof.Reader = aof.NewBufioReader(strings.NewReader("*2\r\n$6\r\nSELECT\r\n$1\r\n0\r\n"))
 	var expected = "Error writing command 1 Error:Some error\n"
 	ftr.Command = regexp.MustCompile("SELECT")
 	rec := newErrorNWriter(1)

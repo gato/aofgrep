@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func processInput(reader aof.AofReader, out io.Writer, ftr filter.Filter, invert bool) (matched, processed int, err error) {
+func processInput(reader aof.Reader, out io.Writer, ftr filter.Filter, invert bool) (matched, processed int, err error) {
 	processed = 0
 	matched = 0
 	for {
