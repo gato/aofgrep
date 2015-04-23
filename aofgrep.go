@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"github.com/gato/aof"
@@ -12,11 +11,11 @@ import (
 	"strings"
 )
 
-func processInput(input *bufio.Reader, out io.Writer, ftr filter.Filter, invert bool) (matched, processed int, err error) {
+func processInput(reader aof.AofReader, out io.Writer, ftr filter.Filter, invert bool) (matched, processed int, err error) {
 	processed = 0
 	matched = 0
 	for {
-		op, e := aof.ReadOperation(input)
+		op, e := reader.ReadOperation()
 		if e != nil {
 			if e == io.EOF {
 				return
@@ -50,7 +49,7 @@ func processFiles(out io.Writer, opt Options) (matched, processed int, err error
 		}
 		defer f.Close()
 		var m, p int
-		m, p, err = processInput(bufio.NewReader(f), out, opt.Filter, opt.Invert)
+		m, p, err = processInput(aof.NewBufioReader(f), out, opt.Filter, opt.Invert)
 		if err != nil {
 			return
 		}
@@ -127,7 +126,7 @@ func main() {
 		matched, processed, err = processFiles(os.Stdout, options)
 	} else {
 		// process stdin
-		matched, processed, err = processInput(bufio.NewReader(os.Stdin), os.Stdout, options.Filter, options.Invert)
+		matched, processed, err = processInput(aof.NewBufioReader(os.Stdin), os.Stdout, options.Filter, options.Invert)
 	}
 	if err != nil {
 		os.Stderr.WriteString(err.Error())
